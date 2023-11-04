@@ -5,22 +5,33 @@ List = list
 Exp = (Atom, List)
 Env = dict
 
+
 def tokenize(input: str) -> List:
     """
     Split input string into a list of tokens. Note that we pad
     parentheses with white space before splitting to separate
-    parentheses from Atoms.
+    parentheses from Atoms (we want ['(', '2'] not ['(2']).
 
     Example:
-    '(+ 1 2)' --> ['+', '1', '2']
+    '(+ 1 2)' --> ['(', '+', '1', '2', ')']
     """
     return input.replace('(', ' ( ').replace(')', ' ) ').split()
 
+def generate_ast(tokens: List) -> List:
+    """Generate abstract syntax tree from input tokens."""
+    
+    t = tokens.pop(0)
 
-def parse(tokens: list) -> list:
-    # for t in tokens:
-    #     pass
-    return tokens
+    if t == '(':
+        ast = []
+        while tokens[0] != ')':
+            ast.append(generate_ast(tokens))
+        tokens.pop(0)  # pop off ')'
+        return ast
+    elif t == ')':
+        raise SyntaxError
+    else:
+        return atomize(t)
 
 def atomize(token: str) -> Atom:
     """
@@ -29,7 +40,7 @@ def atomize(token: str) -> Atom:
     Note that
         Symbol := str
         Number := (int, float)
-        Atom := (Symbol, Number)
+        Atom   := (Symbol, Number)
     """
     try:
         return int(token)
@@ -39,8 +50,8 @@ def atomize(token: str) -> Atom:
         except ValueError:
             return Symbol(token)
 
-
 if __name__ == '__main__':
+    # launch repl env
     while True:
-        try: print(parse(tokenize(input("pylisp> "))))
+        try: print(generate_ast(tokenize(input("pylisp> "))))
         except EOFError: break
