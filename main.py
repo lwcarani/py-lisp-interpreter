@@ -1,4 +1,5 @@
 import operator as op
+import math
 
 Symbol = str
 Number = (int, float)
@@ -7,16 +8,20 @@ List = list
 Exp = (Atom, List)
 Env = dict
 
-lookup_table = {
+symbol_table: Env = {
     '+': op.add,
     '-': op.sub,
     '*': op.mul,
     '/': op.truediv,
     '<=': op.le,
+    '<': op.lt,
+    '>': op.gt,
     '>=': op.ge,
     '!=': op.ne,
     '==': op.eq,
+    'defun': lambda func, args: func(*args),
 }
+symbol_table.update(math.__dict__)
 
 
 def tokenize(input: str) -> List:
@@ -46,14 +51,23 @@ def generate_ast(tokens: List) -> List:
     else:
         return atomize(t)
     
-def eval(x: Exp):
+def eval(x: Exp, symbol_table: Env = symbol_table):
     if isinstance(x, Number):
         return x
     elif isinstance(x, Symbol):
-        return lookup_table.get(x, SyntaxError(f'"{x}" is not a valid symbol'))
+        return symbol_table.get(x, SyntaxError(f'"{x}" is not a valid symbol'))
+    elif x[0] == 'if':
+        condition, statement, alternative = x[1:4]
+        expression = statement if eval(condition, symbol_table) else alternative
+        return eval(expression, symbol_table)
+    elif x[0] == 'defun':
+        # TODO - fix this
+        func_name, params, func = x[1:4]
+        symbol_table[func_name] = lambda *params: eval(func, symbol_table)
+        return func_name.upper()
     else:
-        op = eval(x[0])
-        args = [eval(x[i]) for i in range(1, len(x))]
+        op = eval(x[0], symbol_table)
+        args = [eval(arg, symbol_table) for arg in x[1:]]
         return op(*args)
 
 def atomize(token: str) -> Atom:
@@ -76,5 +90,5 @@ def atomize(token: str) -> Atom:
 if __name__ == '__main__':
     # launch repl env
     while True:
-        try: print(generate_ast(tokenize(input("pylisp> "))))
+        try: print(eval(generate_ast(tokenize(input("pylisp> ")))))
         except EOFError: break

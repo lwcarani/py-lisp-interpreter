@@ -1,6 +1,7 @@
 import unittest
 from unittest import TestCase
 from parameterized.parameterized import parameterized
+import math
 
 from main import (
     tokenize, 
@@ -124,6 +125,24 @@ class TestPyLispInterpreter(TestCase):
             ["(+ 1 2)", 3],
             ["(+ 4 5)", 9],
 
+            # pow
+            ["(pow 2 2)", 4],
+            ["(pow 2 3)", 8],
+            ["(pow 2 4)", 16],
+            ["(pow 3 3)", 27],
+
+            # sqrt
+            ["(sqrt 4)", 2],
+            ["(sqrt 16)", 4],
+            ["(sqrt 100)", 10],
+            ["(sqrt 25)", 5],
+
+            # pi
+            ["(* pi 3)", math.pi * 3],
+            ["(sqrt pi)", math.sqrt(math.pi)],
+            ["(+ pi pi)", math.pi + math.pi],
+            ["(/ pi (+ pi pi))", math.pi / (math.pi + math.pi)],
+
             # Chained Addition
             ["(+ 1 (+ 2 3))", 6],
             ["(+ 4 (+ 5 6))", 15],
@@ -135,6 +154,23 @@ class TestPyLispInterpreter(TestCase):
             # Mixed Operators
             ["(* (+ 1 2) (+ 3 4))", 21],
             ["(* (+ 4 5) (+ 6 7))", 117],
+
+            # conditionals
+            ["(if (< 1 2) 1 2)", 1],
+            ["(if (<= 1 2) 1 2)", 1],
+            ["(if (> 1 2) 1 2)", 2],
+            ["(if (>= 1 2) 1 2)", 2],
+            ["(if (== 42 42) 42 -42)", 42],
+
+            # nested if with pow, pi, sqrt
+            ["(if (== 42 42) (if (== (pow 2 3) 8 ) 1 -2 ) -42)", 1],
+            ["(if (== 42 42) (if (== (pow 2 3) 9 ) 1 -2 ) -42)", -2],
+            ["(if (== 42 42) (if (== (sqrt 36) 6 ) 1 -2 ) -42)", 1],
+            ["(if (== 42 42) (if (== (* pi 2) (+ pi pi) ) 1 -2 ) -42)", 1],
+
+            # Define function
+            ["(defun doublen (n) (* 2 n))", "DOUBLEN"],
+            # ["(defun doublen (n) (* 2 n)) (doublen 4)", 8],
         ]
     )
     def test_ast_evaluator(
