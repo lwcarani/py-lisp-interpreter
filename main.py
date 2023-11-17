@@ -1,5 +1,6 @@
 import operator as op
 import math
+from functools import reduce
 
 Symbol = str
 Number = (int, float)
@@ -19,12 +20,73 @@ symbol_table: Env = {
     '>=': op.ge,
     '!=': op.ne,
     '==': op.eq,
-    'defun': lambda func, args: func(*args),
 }
 symbol_table.update(math.__dict__)
 
 
-def tokenize(input: str) -> List:
+def are_parens_matched_functional(
+    t: List[str]
+) -> SyntaxError | bool:
+    if len(t) == 0:
+        raise SyntaxError(
+            f'Input string cannot be empty.'
+        )
+    # make sure that user input starts and end with open/close parens
+    elif (
+        t[0] != '('
+        or t[-1] != ')'
+    ):
+        raise SyntaxError(
+            f'Input string "{t}" must start and end with open/closed parens.'
+        )
+    
+    d = {'(': 1, ')': -1}
+    res = reduce(
+        lambda a,b: a+b,
+        [d.get(i, 0) for i in t]
+    )
+    if res != 0:
+        raise SyntaxError(
+            f'Input string "{t}" contains mismatched parens.'
+        )
+    else:
+        return True
+    
+def are_parens_matched(
+    s: str
+) -> SyntaxError | bool:
+    stack = []
+
+    if len(s) == 0:
+        raise SyntaxError(
+            f'Input string cannot be empty.'
+        )
+    # make sure that user input starts and end with open/close parens
+    elif (
+        s[0] != '('
+        or s[-1] != ')'
+    ):
+        raise SyntaxError(
+            f'Input string "{s}" must start and end with open/closed parens.'
+        )
+    
+    for char in s:
+        if char == '(':
+            stack.append(char)
+        elif char == ')':
+            if not stack or stack.pop() != '(':
+                raise SyntaxError(
+                    f'Input string "{s}" contains mismatched parens.'
+                )
+
+    if len(stack) > 0:
+        raise SyntaxError(
+            f'Input string "{s}" contains mismatched parens.'
+        )
+    else:
+        return True
+
+def tokenize(input: str) -> List[str]:
     """
     Split input string into a list of tokens. Note that we pad
     parentheses with white space before splitting to separate
@@ -33,7 +95,9 @@ def tokenize(input: str) -> List:
     Example:
     '(+ 1 2)' --> ['(', '+', '1', '2', ')']
     """
-    return input.replace('(', ' ( ').replace(')', ' ) ').split()
+    tokenized_input: List[str] = input.replace('(', ' ( ').replace(')', ' ) ').split()
+    # print("Tokenized input: ", tokenized_input)
+    return tokenized_input
 
 def generate_ast(tokens: List) -> List:
     """Generate abstract syntax tree from input tokens."""
@@ -61,14 +125,32 @@ def eval(x: Exp, symbol_table: Env = symbol_table):
         expression = statement if eval(condition, symbol_table) else alternative
         return eval(expression, symbol_table)
     elif x[0] == 'defun':
-        # TODO - fix this
-        func_name, params, func = x[1:4]
-        symbol_table[func_name] = lambda *params: eval(func, symbol_table)
-        return func_name.upper()
+        # `func_name`: str
+        # `params`: List[str]
+        # `func_body`: List
+        # Example:
+        #   "(defun doublen (n) (* 2 n))" --> 
+        #   `func_name`: "doublen"
+        #   `params`: ["n"]
+        #   `func_body`: ["*", 2, "n"]
+        func_name, params, func_body = x[1:4]
+        symbol_table[func_name] = (params, func_body)
+        return f"Defined function: {func_name.upper()}"
     else:
-        op = eval(x[0], symbol_table)
+        func_name = x[0]
+        func = eval(x[0], symbol_table)
         args = [eval(arg, symbol_table) for arg in x[1:]]
-        return op(*args)
+
+        if isinstance(func, tuple):
+            params, func_body = func
+            if len(args) != len(params):
+                raise ValueError(
+                    f'Function "{func_name}" expects {len(params)} arguments, but {len(args)} were provided.'
+                )
+            symbol_table.update(zip(params, args))
+            return eval(func_body, symbol_table)
+        else:
+            return func(*args)
 
 def atomize(token: str) -> Atom:
     """
@@ -90,5 +172,17 @@ def atomize(token: str) -> Atom:
 if __name__ == '__main__':
     # launch repl env
     while True:
-        try: print(eval(generate_ast(tokenize(input("pylisp> ")))))
+        try: 
+            user_input = input("pylist> ")
+            # first, validate user input
+            # either returns True, or raises SyntaxError
+            if are_parens_matched(user_input):
+                tokenized_input = tokenize(user_input)
+                ast = generate_ast(tokenized_input)
+                output = eval(ast)
+                # print("User input: ", user_input)
+                # print("AST: ", ast)
+                print("Final output: ", output)
+            
+            # print(eval(generate_ast(tokenize(input("pylisp> ")))))
         except EOFError: break
