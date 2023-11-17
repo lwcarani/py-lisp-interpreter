@@ -4,6 +4,8 @@ from parameterized.parameterized import parameterized
 import math
 
 from main import (
+    are_parens_matched,
+    are_parens_matched_functional,
     tokenize, 
     generate_ast, 
     eval,
@@ -18,7 +20,151 @@ Env = dict
 
 
 class TestPyLispInterpreter(TestCase):
-    """Test py-head functionality."""
+    """Test py-lisp-interpreter functionality."""
+
+    @parameterized.expand(
+        [
+            [
+                '(+ 1 2)',
+                True
+            ],
+            
+            [
+                '(+ 1 (* 3 4))', 
+                True
+            ],
+            [
+                '(*(+ 1 2)(+ 1 2))', 
+                True
+            ],
+            [
+                '(+ (/ 5 2) 2)', 
+                True
+            ],
+            [
+                '(defun doublen (n) (* n 2))', 
+                True
+            ],
+            [
+                '(defun fact (n) (if (<= n 1)  1 (* n (fact (- n 1)))))', 
+                True
+            ],
+        ]
+    )
+    def test_matching_parens_helper_functional(
+        self,
+        input: str,
+        expected_output: bool
+    ) -> None:
+        res: bool = are_parens_matched_functional(tokenize(input))
+        self.assertEqual(res, expected_output)
+
+    @parameterized.expand(
+        [
+            [
+                ''
+            ],
+            [
+                'fact 2'
+            ],
+            [
+                '+ 1 2 (* 1 3)'
+            ],
+            [
+                '(+ 1 2)))'
+            ],
+            [
+                '(+ 1 2))'
+            ],
+            [
+                '((+ 1{[([([{[([])]}])])]} 2)'
+            ],
+            [
+                '((((((+ {}{}{}1 2)'
+            ],
+            [
+                '((((+ 1 [][][][]2()())))))))))'
+            ],
+        ]
+    )
+    def test_matching_parens_helper_functional_throws_errors(
+        self,
+        input: str
+    ) -> None:
+        with self.assertRaises(SyntaxError):
+            are_parens_matched_functional(tokenize(input))
+
+    @parameterized.expand(
+        [
+            [
+                '(+ 1 2)',
+                True
+            ],
+            
+            [
+                '(+ 1 (* 3 4))', 
+                True
+            ],
+            [
+                '(*(+ 1 2)(+ 1 2))', 
+                True
+            ],
+            [
+                '(+ (/ 5 2) 2)', 
+                True
+            ],
+            [
+                '(defun doublen (n) (* n 2))', 
+                True
+            ],
+            [
+                '(defun fact (n) (if (<= n 1)  1 (* n (fact (- n 1)))))', 
+                True
+            ],
+        ]
+    )
+    def test_matching_parens_helper(
+        self,
+        input: str,
+        expected_output: bool
+    ) -> None:
+        res: bool = are_parens_matched(input)
+        self.assertEqual(res, expected_output)
+
+    @parameterized.expand(
+        [
+            [
+                ''
+            ],
+            [
+                'fact 2'
+            ],
+            [
+                '+ 1 2 (* 1 3)'
+            ],
+            [
+                '(+ 1 2)))'
+            ],
+            [
+                '(+ 1 2))'
+            ],
+            [
+                '((+ 1{[([([{[([])]}])])]} 2)'
+            ],
+            [
+                '((((((+ {}{}{}1 2)'
+            ],
+            [
+                '((((+ 1 [][][][]2()())))))))))'
+            ],
+        ]
+    )
+    def test_matching_parens_helper_throws_errors(
+        self,
+        input: str
+    ) -> None:
+        with self.assertRaises(SyntaxError):
+            are_parens_matched(input)
 
     @parameterized.expand(
         [
@@ -67,6 +213,10 @@ class TestPyLispInterpreter(TestCase):
             [
                 ['(', '+', '1', '2', ')'],
                 [ '+', 1, 2]
+            ],
+            [
+                ['(', 'd', '2', ')'],
+                [ 'd', 2]
             ],
             [
                 ['(', '+', '1', '(', '*', '3', '3', ')', ')'],
@@ -169,8 +319,9 @@ class TestPyLispInterpreter(TestCase):
             ["(if (== 42 42) (if (== (* pi 2) (+ pi pi) ) 1 -2 ) -42)", 1],
 
             # Define function
-            ["(defun doublen (n) (* 2 n))", "DOUBLEN"],
-            # ["(defun doublen (n) (* 2 n)) (doublen 4)", 8],
+            ["(defun doublen (n) (* 2 n))", "Defined function: DOUBLEN"],
+            ["(defun fib (n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))", "Defined function: FIB"],
+            ["(defun fact (n) (if (<= n 1) 1 (* n (fact (- n 1)))))", "Defined function: FACT"],
         ]
     )
     def test_ast_evaluator(
