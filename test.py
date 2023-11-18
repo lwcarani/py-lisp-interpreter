@@ -4,8 +4,8 @@ from parameterized.parameterized import parameterized
 import math
 
 from main import (
-    are_parens_matched,
-    are_parens_matched_functional,
+    are_parens_matched_map_reduce,
+    are_parens_matched_stack,
     tokenize, 
     generate_ast, 
     eval,
@@ -56,7 +56,7 @@ class TestPyLispInterpreter(TestCase):
         input: str,
         expected_output: bool
     ) -> None:
-        res: bool = are_parens_matched_functional(tokenize(input))
+        res: bool = are_parens_matched_map_reduce(input)
         self.assertEqual(res, expected_output)
 
     @parameterized.expand(
@@ -71,19 +71,25 @@ class TestPyLispInterpreter(TestCase):
                 '+ 1 2 (* 1 3)'
             ],
             [
+                '(+ 1 2 (* 1 3'
+            ],
+            [
+                '(+ 1 2 (* 1 3)'
+            ],
+            [
                 '(+ 1 2)))'
             ],
             [
                 '(+ 1 2))'
             ],
             [
-                '((+ 1{[([([{[([])]}])])]} 2)'
+                '(* 2 1((((((((())))))))'
             ],
             [
-                '((((((+ {}{}{}1 2)'
+                '((((((+ 1 2)'
             ],
             [
-                '((((+ 1 [][][][]2()())))))))))'
+                '((((+ 1 (((- 65 789)))))))2(* 1 2)(/ 5 5))))* 8 8))))))'
             ],
         ]
     )
@@ -92,7 +98,7 @@ class TestPyLispInterpreter(TestCase):
         input: str
     ) -> None:
         with self.assertRaises(SyntaxError):
-            are_parens_matched_functional(tokenize(input))
+            are_parens_matched_map_reduce(input)
 
     @parameterized.expand(
         [
@@ -128,7 +134,7 @@ class TestPyLispInterpreter(TestCase):
         input: str,
         expected_output: bool
     ) -> None:
-        res: bool = are_parens_matched(input)
+        res: bool = are_parens_matched_stack(input)
         self.assertEqual(res, expected_output)
 
     @parameterized.expand(
@@ -143,19 +149,25 @@ class TestPyLispInterpreter(TestCase):
                 '+ 1 2 (* 1 3)'
             ],
             [
+                '(+ 1 2 (* 1 3'
+            ],
+            [
+                '(+ 1 2 (* 1 3)'
+            ],
+            [
                 '(+ 1 2)))'
             ],
             [
                 '(+ 1 2))'
             ],
             [
-                '((+ 1{[([([{[([])]}])])]} 2)'
+                '(* 2 1((((((((())))))))'
             ],
             [
-                '((((((+ {}{}{}1 2)'
+                '((((((+ 1 2)'
             ],
             [
-                '((((+ 1 [][][][]2()())))))))))'
+                '((((+ 1 (((- 65 789)))))))2(* 1 2)(/ 5 5))))* 8 8))))))'
             ],
         ]
     )
@@ -164,7 +176,7 @@ class TestPyLispInterpreter(TestCase):
         input: str
     ) -> None:
         with self.assertRaises(SyntaxError):
-            are_parens_matched(input)
+            are_parens_matched_stack(input)
 
     @parameterized.expand(
         [
@@ -189,6 +201,14 @@ class TestPyLispInterpreter(TestCase):
                 ['(', 'defun', 'doublen', '(', 'n', ')', '(', '*', 'n', '2', ')', ')']
             ],
             [
+                '(format t "The double of 5 is ~D~%" (doublen 5))', 
+                ['(', 'format', 't', '"The', 'double', 'of', '5', 'is', '~D~%"', '(', 'doublen', '5', ')', ')']
+            ],
+            [
+                '(format t "Hello Coding Challenge World~%")', 
+                ['(', 'format', 't', '"Hello', 'Coding', 'Challenge', 'World~%"', ')']
+            ],
+            [
                 '(defun fact (n) (if (<= n 1)  1 (* n (fact (- n 1)))))', 
                 [
                     '(', 'defun', 'fact', '(', 'n', ')', 
@@ -207,7 +227,6 @@ class TestPyLispInterpreter(TestCase):
         res = tokenize(input)
         self.assertEqual(res, expected_output)
 
-
     @parameterized.expand(
         [
             [
@@ -221,6 +240,14 @@ class TestPyLispInterpreter(TestCase):
             [
                 ['(', '+', '1', '(', '*', '3', '3', ')', ')'],
                 [ '+', 1, ['*', 3, 3]]
+            ],
+            [
+                ['(', 'format', 't', '"The', 'double', 'of', '5', 'is', '~D~%"', '(', 'doublen', '5', ')', ')'],
+                ['format', 't', '"The', 'double', 'of', 5, 'is', '~D~%"', ['doublen', 5]]
+            ],
+            [
+                ['(', 'format', 't', '"Hello', 'Coding', 'Challenge', 'World~%"', ')'],
+                ['format', 't', '"Hello', 'Coding', 'Challenge', 'World~%"']
             ],
             [
                 ['(', 'defun', 'doublen', '(', 'n', ')', '(', '*', 'n', '2', ')', ')'],
@@ -322,6 +349,10 @@ class TestPyLispInterpreter(TestCase):
             ["(defun doublen (n) (* 2 n))", "Defined function: DOUBLEN"],
             ["(defun fib (n) (if (< n 2) n (+ (fib (- n 1)) (fib (- n 2)))))", "Defined function: FIB"],
             ["(defun fact (n) (if (<= n 1) 1 (* n (fact (- n 1)))))", "Defined function: FACT"],
+
+            # format t
+            ['(format t "The double of 5 is ~D~%" (doublen 5))', "The double of 5 is 10"],
+            ['(format t "Hello Coding Challenge World~%")', "Hello Coding Challenge World"]
         ]
     )
     def test_ast_evaluator(
