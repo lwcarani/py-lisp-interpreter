@@ -9,7 +9,21 @@ List = list
 Exp = (Atom, List)
 Env = dict
 
-symbol_table: Env = {
+class Env(dict):
+    def __init__(self, params=[], args=[], outer: Env = None):
+        self.update(zip(params, args))
+        self.outer: Env = outer
+
+    def find(self, var):
+        if var in self:
+            return self[var]
+        elif self.outer is not None:
+            return self.outer.find(var)
+        else:
+            raise NameError(f"NameError: name '{var}' is not defined")
+
+global_env: Env = Env()
+global_env.update({
     '+': op.add,
     '-': op.sub,
     '*': op.mul,
@@ -19,10 +33,10 @@ symbol_table: Env = {
     '>': op.gt,
     '>=': op.ge,
     '!=': op.ne,
-    '==': op.eq,
-}
+    '=': op.eq,
+})
 # add standard math library operators to symbol_table
-symbol_table.update(math.__dict__)
+global_env.update(math.__dict__)
 
 
 def are_parens_matched_stack(
@@ -139,19 +153,15 @@ def generate_ast(tokens: List) -> List:
     else:
         return atomize(t)
     
-def eval(x: Exp, symbol_table: Env = symbol_table):
+def eval(x: Exp, env: Env = global_env):
     if isinstance(x, Number):
         return x
     elif isinstance(x, Symbol):
-        return symbol_table.get(x, SyntaxError(f'"{x}" is not a valid symbol'))
+        return env.find(x)
     elif x[0] == 'if':
         condition, statement, alternative = x[1:4]
-
-        # TODO - delete below
-        if eval(condition, symbol_table):
-            print('here')
-        expression = statement if eval(condition, symbol_table) else alternative
-        return eval(expression, symbol_table)
+        expression = statement if eval(condition, Env(env.keys(), env.values(), env)) else alternative
+        return eval(expression, Env(env.keys(), env.values(), env))
     elif x[0] == 'defun':
         # `func_name`: str
         # `params`: List[str]
@@ -162,11 +172,11 @@ def eval(x: Exp, symbol_table: Env = symbol_table):
         #   `params`: ["n"]
         #   `func_body`: ["*", 2, "n"]
         func_name, params, func_body = x[1:4]
-        symbol_table[func_name] = (params, func_body)
+        env[func_name] = (params, func_body)
         return f"Defined function: {func_name.upper()}"
     elif x[0] == 'format':
         if isinstance(x[-1], list):
-            fill_val = eval(x[-1], symbol_table)
+            fill_val = eval(x[-1], Env(env.keys(), env.values(), env))
             res = " ".join(str(i) for i in x[2:-1])
         else:
             fill_val = ""
@@ -178,8 +188,8 @@ def eval(x: Exp, symbol_table: Env = symbol_table):
         return res
     else:
         func_name = x[0]
-        func = eval(x[0], symbol_table)
-        args = [eval(arg, symbol_table) for arg in x[1:]]
+        func = eval(x[0], Env(env.keys(), env.values(), env))
+        args = [eval(arg, Env(env.keys(), env.values(), env)) for arg in x[1:]]
 
         if isinstance(func, tuple):
             params, func_body = func
@@ -187,8 +197,8 @@ def eval(x: Exp, symbol_table: Env = symbol_table):
                 raise ValueError(
                     f'Function "{func_name}" expects {len(params)} arguments, but {len(args)} were provided.'
                 )
-            symbol_table.update(zip(params, args))
-            return eval(func_body, symbol_table)
+            env.update(zip(params, args))
+            return eval(func_body, Env(env.keys(), env.values(), env))
         else:
             return func(*args)
 
@@ -212,34 +222,32 @@ def atomize(token: str) -> Atom:
 if __name__ == '__main__':
 
     ### read lisp script from txt file
-    # user_input = ""
+    user_input = ""
 
-    # file_path = 'test_script.txt'
-    # with open(file_path, 'r') as file:
-    #     lines = file.readlines()
+    file_path = 'test_script.txt'
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
 
-    # # Now 'lines' is a list where each element is a line from the file
-    # for line in lines:
-    #     user_input += line.strip()
-    #     try:
-    #         if are_parens_matched_map_reduce(user_input):
-    #             print(eval(generate_ast(tokenize(user_input))))
-    #             user_input = ""
-    #     except:
-    #         continue
-
-    # TODO - write fib function in pure python to make sure its implemented correctly, then re-visit the below
-
-    # launch repl env
-    while True:
-        print(eval(generate_ast(tokenize("(defun fib (n)  (if (< n 2)      n      (+ (fib (- n 1))         (fib (- n 2)))))"))))
-        print(eval(generate_ast(tokenize("(fib 5)"))))
-        
-        try: 
-            user_input = input("pylisp> ")
-            # first, validate user input
-            # either returns True, or raises SyntaxError
+    # Now 'lines' is a list where each element is a line from the file
+    for line in lines:
+        user_input += line.strip()
+        try:
             if are_parens_matched_map_reduce(user_input):
                 print(eval(generate_ast(tokenize(user_input))))
-        except EOFError: break
+                user_input = ""
+        except:
+            continue
+        
+    ### launch repl env
+    # while True:
+    #     print(eval(generate_ast(tokenize("(defun fib (n)  (if (< n 2)      n      (+ (fib (- n 1))         (fib (- n 2)))))"))))
+    #     print(eval(generate_ast(tokenize("(fib 2)"))))
+        
+    #     try: 
+    #         user_input = input("pylisp> ")
+    #         # first, validate user input
+    #         # either returns True, or raises SyntaxError
+    #         if are_parens_matched_map_reduce(user_input):
+    #             print(eval(generate_ast(tokenize(user_input))))
+    #     except EOFError: break
 
