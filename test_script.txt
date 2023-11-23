@@ -18,7 +18,13 @@
 (hello)
 
 (format t "The double of 5 is ~D~%" (doublen 5))
+(format t "The double of 21 is ~D~%" (doublen 21))
+(format t "The double of 107 is ~D~%" (doublen 107))
 
 (format t "Factorial of 5 is ~D~%" (fact 5))
+(format t "Factorial of 6 is ~D~%" (fact 6))
+(format t "Factorial of 7 is ~D~%" (fact 7))
+(format t "Factorial of 10 is ~D~%" (fact 10))
+(format t "Factorial of 12 is ~D~%" (fact 12))
 
 (format t "The 7th number of the Fibonacci sequence is ~D~%" (fib 7))

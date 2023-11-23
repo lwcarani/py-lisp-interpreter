@@ -296,7 +296,11 @@ class TestPyLispInterpreter(TestCase):
             ["(- 5 2)", 3],
             ["(- 0 0)", 0],
             ["(- 2 5)", -3],
-            ["(- 10 3 )", 7],
+            ["(- (+ 5 (- 105 100)) (+ 1 2 ) )", 7],
+
+            # sin
+            ["(sin 0)", 0.0],
+            ["(sin (/ pi (* (+ 1 1) (* 1 1))))", 1.0],
 
             # Basic Addition
             ["(+ 1 2)", 3],
@@ -351,6 +355,7 @@ class TestPyLispInterpreter(TestCase):
             ["(defun fact (n) (if (<= n 1) 1 (* n (fact (- n 1)))))", "Defined function: FACT"],
             ["(doublen 1)", 2],
             ["(doublen 25)", 50],
+            ["(doublen 21)", 42],
             ["(doublen 617)", 1234],
             ["(fact 0)", 1],
             ["(fact 1)", 1],

@@ -1,3 +1,5 @@
+import inquirer
+from enum import Enum
 import operator as op
 import math
 from functools import reduce
@@ -8,6 +10,10 @@ Atom = (Symbol, Number)
 List = list
 Exp = (Atom, List)
 Env = dict
+
+class Mode(Enum):
+    FILE = 'file'
+    REPL = 'REPL'
 
 class Env(dict):
     def __init__(self, params=[], args=[], outer: Env = None):
@@ -220,34 +226,58 @@ def atomize(token: str) -> Atom:
             return Symbol(token)
 
 if __name__ == '__main__':
+    questions = [
+        inquirer.List(
+            name='mode',
+            message="Would you like to open the REPL environment, or execute a file?",
+            choices=[m.value for m in Mode]
+        ),
+    ]
+    mode = inquirer.prompt(questions)['mode']
 
-    ### read lisp script from txt file
-    user_input = ""
+    if mode == Mode.REPL.value:
+        ### launch REPL env
+        while True:            
+            try: 
+                user_input = input("pylisp> ")
+                # first, validate user input
+                # either returns True, or raises SyntaxError
+                if are_parens_matched_map_reduce(user_input):
+                    print(eval(generate_ast(tokenize(user_input))))
+            except EOFError: break
+    elif mode == Mode.FILE.value:
+        ### read lisp script from txt file
+        while True:
+            input_file = input('Enter the location of the file: ')
+            with open(input_file, 'r') as file:
+                lines = file.readlines()
 
-    file_path = 'test_script.txt'
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
+            user_input = ""
+            for line in lines:
+                user_input += line.strip()
+                if len(user_input) > 0:
+                    try:
+                        if are_parens_matched_map_reduce(user_input):
+                            print(eval(generate_ast(tokenize(user_input))))
+                            user_input = ""
+                    except Exception as e:
+                        continue
+                else:
+                    continue
 
-    # Now 'lines' is a list where each element is a line from the file
-    for line in lines:
-        user_input += line.strip()
-        try:
-            if are_parens_matched_map_reduce(user_input):
-                print(eval(generate_ast(tokenize(user_input))))
-                user_input = ""
-        except:
-            continue
-        
-    ### launch repl env
-    # while True:
-    #     print(eval(generate_ast(tokenize("(defun fib (n)  (if (< n 2)      n      (+ (fib (- n 1))         (fib (- n 2)))))"))))
-    #     print(eval(generate_ast(tokenize("(fib 2)"))))
-        
-    #     try: 
-    #         user_input = input("pylisp> ")
-    #         # first, validate user input
-    #         # either returns True, or raises SyntaxError
-    #         if are_parens_matched_map_reduce(user_input):
-    #             print(eval(generate_ast(tokenize(user_input))))
-    #     except EOFError: break
+            continue_yes_no = [
+                inquirer.List(
+                    name='cont',
+                    message="Would you like to execute another file?",
+                    choices=['Yes', 'No']
+                ),
+            ]
+            ans = inquirer.prompt(continue_yes_no)['cont']
 
+            match ans:
+                case 'Yes':
+                    continue
+                case 'No':
+                    break
+                case _:
+                    break
