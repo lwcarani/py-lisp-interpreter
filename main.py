@@ -9,27 +9,26 @@ Number = (int, float)
 Atom = (Symbol, Number)
 List = list
 Exp = (Atom, List)
-Env = dict
 
 class Mode(Enum):
     FILE = 'file'
     REPL = 'REPL'
 
-class Env(dict):
-    def __init__(self, params=[], args=[], outer: Env = None):
+class SymbolTable(dict):
+    def __init__(self, params=[], args=[], outer_scope = None):
         self.update(zip(params, args))
-        self.outer: Env = outer
+        self.outer_scope = outer_scope
 
     def find(self, var):
         if var in self:
             return self[var]
-        elif self.outer is not None:
-            return self.outer.find(var)
+        elif self.outer_scope is not None:
+            return self.outer_scope.find(var)
         else:
             raise NameError(f"NameError: name '{var}' is not defined")
 
-global_env: Env = Env()
-global_env.update({
+global_symbol_table= SymbolTable()
+global_symbol_table.update({
     '+': op.add,
     '-': op.sub,
     '*': op.mul,
@@ -42,15 +41,15 @@ global_env.update({
     '=': op.eq,
 })
 # add standard math library operators to symbol_table
-global_env.update(math.__dict__)
+global_symbol_table.update(math.__dict__)
 
 
 def are_parens_matched_stack(
     s: str
 ) -> SyntaxError | bool:
     """
-    Iterate over entire input string, using a stack to keep track of open
-    and closed parens. 
+    Iterate over input string, using a stack
+    to keep track of open and closed parens. 
     """
     stack = []
 
@@ -79,6 +78,7 @@ def are_parens_matched_stack(
                     f'Input string "{s}" contains mismatched parens.'
                 )
 
+    # stack should be empty at this point, if not, throw error
     if len(stack) > 0:
         raise SyntaxError(
             f'Input string "{s}" contains mismatched parens.'
@@ -90,10 +90,10 @@ def are_parens_matched_map_reduce(
     s: str
 ) -> SyntaxError | bool:
     """
-    A more functional approach to checking that all parens are matching.
+    A more functional approach to check that all parens are matching.
     Uses built-in Python `map` and `reduce` functions.
     """
-    t = tokenize(s)
+    t: List = tokenize(s)
     if len(t) == 0:
         raise SyntaxError(
             f'Input string cannot be empty.'
@@ -128,13 +128,12 @@ def tokenize(input: str) -> List[str]:
     """
     Split input string into a list of tokens. Note that we pad
     parentheses with white space before splitting to separate
-    parentheses from Atoms (we want ['(', '2'] not ['(2']).
-
-    Example:
-    '(+ 1 2)' --> ['(', '+', '1', '2', ')']
+    parentheses from Atoms 
+    --> we want '(+ 1 2)' to tokenize to ['(', '+', '1', '2', ')']
+    not ['(+', '1', '2)']
     """
+
     tokenized_input: List[str] = input.replace('(', ' ( ').replace(')', ' ) ').split()
-    # print("Tokenized input: ", tokenized_input)
     return tokenized_input
 
 def generate_ast(tokens: List) -> List:
@@ -148,8 +147,10 @@ def generate_ast(tokens: List) -> List:
     """
     t = tokens.pop(0)
 
+    # start a new sublist everytime we encounter an open parens
     if t == '(':
         ast = []
+        # append tokens to sublist until we encounter a close parens
         while tokens[0] != ')':
             ast.append(generate_ast(tokens))
         tokens.pop(0)  # pop off ')'
@@ -159,15 +160,19 @@ def generate_ast(tokens: List) -> List:
     else:
         return atomize(t)
     
-def eval(x: Exp, env: Env = global_env):
+def eval(x: Exp, st = global_symbol_table):
+    """Evaluate the abstract syntax tree"""
     if isinstance(x, Number):
         return x
     elif isinstance(x, Symbol):
-        return env.find(x)
+        # start with the innermost scope of the symbol table
+        # to find symbol definition, searching outer scope until
+        # symbol definition is found
+        return st.find(x)
     elif x[0] == 'if':
         condition, statement, alternative = x[1:4]
-        expression = statement if eval(condition, Env(env.keys(), env.values(), env)) else alternative
-        return eval(expression, Env(env.keys(), env.values(), env))
+        expression = statement if eval(condition, SymbolTable(st.keys(), st.values(), st)) else alternative
+        return eval(expression, SymbolTable(st.keys(), st.values(), st))
     elif x[0] == 'defun':
         # `func_name`: str
         # `params`: List[str]
@@ -178,11 +183,11 @@ def eval(x: Exp, env: Env = global_env):
         #   `params`: ["n"]
         #   `func_body`: ["*", 2, "n"]
         func_name, params, func_body = x[1:4]
-        env[func_name] = (params, func_body)
+        st[func_name] = (params, func_body)
         return f"Defined function: {func_name.upper()}"
     elif x[0] == 'format':
         if isinstance(x[-1], list):
-            fill_val = eval(x[-1], Env(env.keys(), env.values(), env))
+            fill_val = eval(x[-1], SymbolTable(st.keys(), st.values(), st))
             res = " ".join(str(i) for i in x[2:-1])
         else:
             fill_val = ""
@@ -194,17 +199,21 @@ def eval(x: Exp, env: Env = global_env):
         return res
     else:
         func_name = x[0]
-        func = eval(x[0], Env(env.keys(), env.values(), env))
-        args = [eval(arg, Env(env.keys(), env.values(), env)) for arg in x[1:]]
+        func = eval(x[0], SymbolTable(st.keys(), st.values(), st))
+        args = [eval(arg, SymbolTable(st.keys(), st.values(), st)) for arg in x[1:]]
 
+        # if `func` is a tuple, it is a user defined function, so update local scoping 
+        # of symbol table with user-provided parameters
         if isinstance(func, tuple):
             params, func_body = func
             if len(args) != len(params):
                 raise ValueError(
                     f'Function "{func_name}" expects {len(params)} arguments, but {len(args)} were provided.'
                 )
-            env.update(zip(params, args))
-            return eval(func_body, Env(env.keys(), env.values(), env))
+            st.update(zip(params, args))
+            return eval(func_body, SymbolTable(st.keys(), st.values(), st))
+        elif isinstance(func, (int, float, str)):
+            return func
         else:
             return func(*args)
 
