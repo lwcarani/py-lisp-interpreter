@@ -13,7 +13,7 @@ call C:\...\py-lisp-interpreter\pylisp_venv\Scripts\activate.bat
 python C:\...\py-lisp-interpreter\main.py %*
 ```
 
-So now, when I type `pylisp` in the command prompt, this batch file will execute, which in turn, launches the appropriate python virtual environment, then runs the `py-lisp-interpreter` Python script. 
+So now, when I type `pylisp` in the command prompt, this batch file will execute, which in turn, launches the appropriate Python virtual environment, then runs the `py-lisp-interpreter` Python script. 
 
 ## Examples
 
