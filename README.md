@@ -32,10 +32,14 @@ The user is then prompted to enter another file to execute, or they can exit the
 ```cmd
 Enter the location of the file: test_script.txt
 Defined function: HELLO
+Defined function: MEANING_OF_LIFE
+Defined function: MEANING_OF_LIFE_ANSWER
 Defined function: DOUBLEN
 Defined function: FIB
 Defined function: FACT
 Hello Coding Challenge World
+42
+The meaning of life is 42
 The double of 5 is 10
 The double of 21 is 42
 The double of 107 is 214

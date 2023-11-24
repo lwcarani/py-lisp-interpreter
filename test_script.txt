@@ -1,6 +1,12 @@
 (defun hello ()
   (format t "Hello Coding Challenge World~%"))
 
+(defun meaning_of_life ()
+  (42))
+
+(defun meaning_of_life_answer ()
+  (format t "The meaning of life is ~D~%" (meaning_of_life)))
+
 (defun doublen (n)
   (* n 2))
 
@@ -16,6 +22,8 @@
     (* n (fact (- n 1)))))
 
 (hello)
+(meaning_of_life)
+(meaning_of_life_answer)
 
 (format t "The double of 5 is ~D~%" (doublen 5))
 (format t "The double of 21 is ~D~%" (doublen 21))
