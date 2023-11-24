@@ -68,6 +68,9 @@ class TestPyLispInterpreter(TestCase):
                 'fact 2'
             ],
             [
+                ')))((('
+            ],
+            [
                 '+ 1 2 (* 1 3)'
             ],
             [
@@ -144,6 +147,9 @@ class TestPyLispInterpreter(TestCase):
             ],
             [
                 'fact 2'
+            ],
+            [
+                ')))((('
             ],
             [
                 '+ 1 2 (* 1 3)'
