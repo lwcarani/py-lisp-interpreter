@@ -25,11 +25,7 @@ C:\> pylisp
 [?] Would you like to open the REPL environment, or execute a file?: file
  > file
    REPL
-```
 
-The user is then prompted to enter another file to execute, or they can exit the program:
-
-```cmd
 Enter the location of the file: test_script.txt
 Defined function: HELLO
 Defined function: MEANING_OF_LIFE
@@ -49,6 +45,14 @@ Factorial of 7 is 5040
 Factorial of 10 is 3628800
 Factorial of 12 is 479001600
 The 7th number of the Fibonacci sequence is 13
+[?] Would you like to execute another file?: Yes
+ > Yes
+   No
+```
+
+After running a local file, the user is then prompted to enter another file to execute, or they can exit the program:
+
+```cmd
 [?] Would you like to execute another file?: Yes
  > Yes
    No
@@ -77,6 +81,14 @@ pylisp> (fact 5)
 120
 pylisp> (fact 10)
 3628800
+pylisp> (defun add (a b) (+ a b))
+Defined function: ADD
+pylisp> (add 4 5)
+9
+pylisp> (add (add 21 21) 42 )
+84
+pylisp> (add (add 21 21) (fact 5) )
+162
 ```
 
 ## Acknowledgements
