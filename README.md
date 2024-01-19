@@ -45,17 +45,14 @@ Factorial of 7 is 5040
 Factorial of 10 is 3628800
 Factorial of 12 is 479001600
 The 7th number of the Fibonacci sequence is 13
-[?] Would you like to execute another file?: Yes
- > Yes
-   No
 ```
 
 After running a local file, the user is then prompted to enter another file to execute, or they can exit the program:
 
 ```cmd
-[?] Would you like to execute another file?: Yes
- > Yes
-   No
+[?] Would you like to execute another file?: No
+   Yes
+ > No
 ```
 
 If the user chooses to enter the REPL environment, they can then execute simple Lisp expressions:
