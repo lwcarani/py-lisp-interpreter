@@ -240,8 +240,12 @@ if __name__ == "__main__":
                 user_input = input("pylisp> ")
                 # first, validate user input
                 # either returns True, or raises SyntaxError
-                if are_parens_matched_map_reduce(user_input):
-                    print(eval(generate_ast(tokenize(user_input))))
+                try:
+                    if are_parens_matched_map_reduce(user_input):
+                        print(eval(generate_ast(tokenize(user_input))))
+                except Exception as e:
+                    print(e)
+                    continue
             except EOFError:
                 break
     elif mode == Mode.FILE.value:
