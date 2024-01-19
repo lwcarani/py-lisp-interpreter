@@ -21,9 +21,6 @@ class SymbolTable(dict):
         self.update(zip(params, args))
         self.outer_scope = outer_scope
 
-    # def __call__(self, outer_scope)
-    #     self.outer_scope = outer_scope
-
     def find(self, var):
         if var in self:
             return self[var]
