@@ -49,10 +49,14 @@ global_symbol_table.update(
 global_symbol_table.update(math.__dict__)
 
 
-def are_parens_matched_stack(s: str) -> SyntaxError | bool:
+def are_parens_matched_stack(s: str) -> bool:
     """
     Iterate over input string, using a stack
     to keep track of open and closed parens.
+
+    Raises:
+        SyntaxError: If `s` is empty or if `s` does
+        not have matching opened and closed parentheses
     """
     stack = []
 
@@ -78,10 +82,14 @@ def are_parens_matched_stack(s: str) -> SyntaxError | bool:
         return True
 
 
-def are_parens_matched_map_reduce(s: str) -> SyntaxError | bool:
+def are_parens_matched_map_reduce(s: str) -> bool:
     """
     A more functional approach to check that all parens are matching.
     Uses built-in Python `map` and `reduce` functions.
+
+    Raises:
+        SyntaxError: If `s` is empty or if `s` does
+        not have matching opened and closed parentheses
     """
     t: List = tokenize(s)
     if len(t) == 0:
