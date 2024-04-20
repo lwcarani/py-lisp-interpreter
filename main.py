@@ -8,7 +8,7 @@ Symbol = str            # Implement a Lisp Symbol as a Python str
 Number = (int, float)   # Implement a Lisp Number as a Python int or float
 Atom = (Symbol, Number) # Implement a Lisp Atom as a Symbol or Number
 List = list             # Implement a Lisp List as a Python list
-Exp = (Atom, List)      # Implement a expression as an Atom or List
+Exp = (Atom, List)      # Implement a Lisp expression as an Atom or List
 
 
 class Mode(Enum):
