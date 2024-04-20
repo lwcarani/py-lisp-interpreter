@@ -18,7 +18,7 @@ class Mode(Enum):
 
 class SymbolTable(dict):
 """
-A mapping of {variable: value}
+A mapping of {variable name: value}
 """
     def __init__(self, params=[], args=[], outer_scope=None):
         self.update(zip(params, args))
