@@ -4,11 +4,11 @@ import operator as op
 import math
 from functools import reduce
 
-Symbol = str            # Implement a Lisp Symbol as a Python str
-Number = (int, float)   # Implement a Lisp Number as a Python int or float
-Atom = (Symbol, Number) # Implement a Lisp Atom as a Symbol or Number
-List = list             # Implement a Lisp List as a Python list
-Exp = (Atom, List)      # Implement a Lisp expression as an Atom or List
+Symbol = str  # Implement a Lisp Symbol as a Python str
+Number = (int, float)  # Implement a Lisp Number as a Python int or float
+Atom = (Symbol, Number)  # Implement a Lisp Atom as a Symbol or Number
+List = list  # Implement a Lisp List as a Python list
+Exp = (Atom, List)  # Implement a Lisp expression as an Atom or List
 
 
 class Mode(Enum):
@@ -17,10 +17,11 @@ class Mode(Enum):
 
 
 class SymbolTable(dict):
-"""
-A mapping of {variable name: value}
-"""
-    def __init__(self, params=[], args=[], outer_scope=None):
+    """
+    A mapping of {variable name: value}
+    """
+
+    def __init__(self, params, args, outer_scope=None):
         self.update(zip(params, args))
         self.outer_scope = outer_scope
 
